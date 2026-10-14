@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+Jinja2
+Pillow
+python-multipartfastapi
+uvicorn[standard]
+Jinja2
+Pillow
+python-multipart
