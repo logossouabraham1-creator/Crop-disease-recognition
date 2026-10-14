@@ -1,0 +1,519 @@
+/* =========================================
+   1. GLOBAL SETTINGS
+========================================= */
+
+:root {
+    --forest-green: #00170F;
+    --deep-green: #06291D;
+    --leaf-green: #78B77A;
+    --light-green: #EAF4E8;
+    --cream: #F7F8F2;
+    --white: #FFFFFF;
+    --text-dark: #17251D;
+    --text-muted: #68776C;
+    --border-color: #DCE5DC;
+    --error-color: #B42318;
+
+    --border-radius: 16px;
+    --small-radius: 8px;
+
+    --content-width: 1120px;
+}
+
+
+/* =========================================
+   2. RESET AND BASIC PAGE STYLES
+========================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: var(--cream);
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+    outline: 3px solid var(--leaf-green);
+    outline-offset: 4px;
+}
+
+img {
+    max-width: 100%;
+}
+
+
+/* =========================================
+   3. HEADER AND NAVIGATION
+========================================= */
+
+.site-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 22px max(5%, calc((100% - var(--content-width)) / 2));
+
+    background-color: var(--forest-green);
+    color: var(--white);
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.navigation {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.navigation a {
+    color: #E0E9E2;
+    font-size: 0.95rem;
+    transition: color 0.2s ease;
+}
+
+.navigation a:hover {
+    color: var(--leaf-green);
+}
+
+
+/* =========================================
+   4. HERO SECTION
+========================================= */
+
+.hero {
+    padding: 100px 24px 110px;
+    text-align: center;
+
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            #164833 0%,
+            var(--forest-green) 65%
+        );
+
+    color: var(--white);
+}
+
+.eyebrow {
+    margin: 0 0 14px;
+
+    color: var(--leaf-green);
+
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.hero h1 {
+    max-width: 800px;
+    margin: 0 auto 22px;
+
+    font-size: clamp(2.3rem, 5vw, 4.2rem);
+    line-height: 1.12;
+    letter-spacing: -1.8px;
+}
+
+.hero-description {
+    max-width: 600px;
+    margin: 0 auto 32px;
+
+    color: #D4E0D7;
+    font-size: 1.08rem;
+}
+
+.primary-link {
+    display: inline-block;
+
+    padding: 13px 25px;
+
+    background-color: var(--leaf-green);
+    color: var(--forest-green);
+
+    border-radius: var(--small-radius);
+
+    font-weight: 700;
+
+    transition:
+        background-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.primary-link:hover {
+    background-color: #94CD96;
+    transform: translateY(-2px);
+}
+
+
+/* =========================================
+   5. ANALYSIS SECTION
+========================================= */
+
+.analysis-section {
+    max-width: var(--content-width);
+    margin: 0 auto;
+    padding: 85px 24px;
+}
+
+.section-heading {
+    max-width: 650px;
+    margin: 0 auto 38px;
+    text-align: center;
+}
+
+.section-heading h2,
+.about-section h2 {
+    margin: 0 0 16px;
+
+    color: var(--forest-green);
+
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    line-height: 1.2;
+}
+
+.section-heading > p:last-child {
+    color: var(--text-muted);
+}
+
+
+/* =========================================
+   6. UPLOAD CARD
+========================================= */
+
+.upload-card {
+    max-width: 680px;
+    margin: 0 auto;
+
+    padding: 30px;
+
+    background-color: var(--white);
+
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+
+    box-shadow: 0 12px 35px rgba(0, 23, 15, 0.06);
+}
+
+#upload-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+
+/* =========================================
+   7. IMAGE UPLOAD AREA
+========================================= */
+
+.upload-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 240px;
+    padding: 30px 20px;
+
+    background-color: #FAFCF9;
+
+    border: 2px dashed #A9C5AE;
+    border-radius: var(--border-radius);
+
+    text-align: center;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.upload-area:hover {
+    background-color: var(--light-green);
+    border-color: var(--leaf-green);
+}
+
+.upload-area:focus-within {
+    outline: 3px solid var(--leaf-green);
+    outline-offset: 4px;
+}
+
+.upload-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 58px;
+    height: 58px;
+    margin-bottom: 15px;
+
+    background-color: var(--light-green);
+    color: var(--forest-green);
+
+    border-radius: 50%;
+
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.upload-title {
+    margin-bottom: 6px;
+
+    color: var(--forest-green);
+
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.upload-description {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+#crop-image {
+    max-width: 100%;
+    margin-top: 20px;
+
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+
+/* =========================================
+   8. IMAGE PREVIEW
+========================================= */
+
+#preview-container {
+    padding: 20px;
+
+    background-color: #F8FAF7;
+
+    border: 1px solid var(--border-color);
+    border-radius: var(--small-radius);
+}
+
+#preview-container h3 {
+    margin: 0 0 15px;
+
+    color: var(--forest-green);
+    font-size: 1rem;
+}
+
+#image-preview {
+    display: block;
+
+    width: 100%;
+    max-height: 380px;
+
+    object-fit: contain;
+
+    background-color: #EDF1EB;
+
+    border-radius: var(--small-radius);
+}
+
+
+/* =========================================
+   9. UPLOAD MESSAGES
+========================================= */
+
+#upload-message {
+    min-height: 24px;
+    margin: 0;
+
+    color: var(--deep-green);
+    font-size: 0.9rem;
+}
+
+#upload-message:empty {
+    min-height: 0;
+}
+
+
+/* =========================================
+   10. BUTTONS
+========================================= */
+
+#analyze-button {
+    width: 100%;
+    padding: 15px 20px;
+
+    background-color: var(--forest-green);
+    color: var(--white);
+
+    border: none;
+    border-radius: var(--small-radius);
+
+    font-weight: 700;
+
+    transition:
+        background-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+#analyze-button:not(:disabled):hover {
+    background-color: #164833;
+    transform: translateY(-1px);
+}
+
+#analyze-button:disabled {
+    background-color: #A7B4AA;
+    color: #F7F8F7;
+
+    cursor: not-allowed;
+}
+
+
+/* =========================================
+   11. ANALYSIS RESULT SECTION
+========================================= */
+
+.result-section {
+    max-width: 680px;
+    margin: 35px auto 0;
+    padding: 28px;
+
+    background-color: var(--white);
+
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+
+.result-section h2 {
+    margin-top: 0;
+    color: var(--forest-green);
+}
+
+#result-content {
+    color: var(--text-dark);
+}
+
+
+/* =========================================
+   12. ABOUT SECTION
+========================================= */
+
+.about-section {
+    padding: 75px 24px;
+
+    background-color: var(--light-green);
+
+    text-align: center;
+}
+
+.about-section h2 {
+    max-width: 700px;
+    margin: 0 auto 20px;
+}
+
+.about-section > p:not(.eyebrow) {
+    max-width: 680px;
+    margin: 0 auto 14px;
+
+    color: var(--text-muted);
+}
+
+
+/* =========================================
+   13. FOOTER
+========================================= */
+
+.site-footer {
+    padding: 25px 20px;
+
+    background-color: var(--forest-green);
+    color: #D4E0D7;
+
+    text-align: center;
+    font-size: 0.85rem;
+}
+
+.site-footer p {
+    margin: 0;
+}
+
+
+/* =========================================
+   14. RESPONSIVE DESIGN
+========================================= */
+
+@media (max-width: 650px) {
+
+    .site-header {
+        flex-direction: column;
+        gap: 18px;
+
+        padding: 22px 18px;
+    }
+
+    .navigation {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 12px 22px;
+    }
+
+    .hero {
+        padding: 75px 20px 85px;
+    }
+
+    .hero h1 {
+        letter-spacing: -0.8px;
+    }
+
+    .analysis-section {
+        padding: 60px 16px;
+    }
+
+    .upload-card {
+        padding: 18px;
+    }
+
+    .upload-area {
+        min-height: 210px;
+        padding: 24px 14px;
+    }
+
+    #preview-container {
+        padding: 14px;
+    }
+
+    .result-section {
+        padding: 20px;
+    }
+
+    .about-section {
+        padding: 60px 20px;
+    }
+}
