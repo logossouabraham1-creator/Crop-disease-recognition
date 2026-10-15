@@ -1,44 +1,32 @@
-import base64
 import json
 import os
 
 from dotenv import load_dotenv
-from openai import AsyncOpenAI, OpenAIError
+from google import genai
+from google.genai import types
+from google.genai.errors import APIError
 from pydantic import ValidationError
 
 from app.services.assessment_schema import CropAssessment
 
 
-# Load settings from the project's .env file.
+# Load environment variables from the project's .env file.
 load_dotenv()
 
 
-# OpenCode configuration.
-OPENCODE_BASE_URL = os.getenv(
-    "OPENCODE_BASE_URL",
-    "https://opencode.ai/zen/v1",
-)
-
-KIMI_MODEL = os.getenv(
-    "KIMI_MODEL",
-    "kimi-k2.6",
-)
-
-
-# Development mode avoids real AI requests while we build the app.
-# Set CDR_DEMO_MODE=false when you're ready to use the real AI service.
-CDR_DEMO_MODE = (
-    os.getenv("CDR_DEMO_MODE", "true").strip().lower()
-    in {"1", "true", "yes", "on"}
+# Gemini configuration.
+GEMINI_MODEL = os.getenv(
+    "GEMINI_MODEL",
+    "gemini-2.5-flash",
 )
 
 
 class KimiConfigurationError(Exception):
-    """Raised when the OpenCode/Kimi configuration is missing."""
+    """Raised when the Gemini configuration is missing."""
 
 
 class KimiServiceError(Exception):
-    """Raised when the AI assessment fails."""
+    """Raised when Gemini cannot complete an assessment."""
 
 
 ASSESSMENT_INSTRUCTIONS = """
@@ -59,6 +47,8 @@ Your responsibilities:
 8. Do not claim that a suspected disease is confirmed.
 9. Do not recommend a specific pesticide or dosage without
    sufficient evidence and appropriate context.
+10. If the plant is not a tomato, identify the actual crop when
+    possible. Do not automatically classify every image as tomato.
 
 Return ONLY one valid JSON object with these fields:
 
@@ -95,17 +85,17 @@ Required rules:
 - Include every required field.
 - Do not wrap the JSON in Markdown code fences.
 - Do not add explanations outside the JSON object.
+- Do not invent symptoms that are not visible in the image.
+- Explain when the image quality prevents reliable assessment.
 """
 
 
-def _image_to_data_url(
-    image_bytes: bytes,
-    image_format: str,
-) -> str:
-    """Convert validated image bytes into a Base64 data URL."""
+def _get_image_mime_type(image_format: str) -> str:
+    """Convert the validated image format into a MIME type."""
 
     mime_types = {
         "JPEG": "image/jpeg",
+        "JPG": "image/jpeg",
         "PNG": "image/png",
         "WEBP": "image/webp",
     }
@@ -114,50 +104,29 @@ def _image_to_data_url(
 
     if normalized_format not in mime_types:
         raise KimiServiceError(
-            "Unsupported image format for AI analysis."
+            "Unsupported image format for Gemini analysis."
         )
 
-    encoded_image = base64.b64encode(
-        image_bytes
-    ).decode("utf-8")
-
-    mime_type = mime_types[normalized_format]
-
-    return f"data:{mime_type};base64,{encoded_image}"
+    return mime_types[normalized_format]
 
 
-def _create_demo_assessment() -> CropAssessment:
-    """
-    Return a clearly labelled placeholder assessment.
+def _clean_json_response(content: str) -> str:
+    """Remove Markdown code fences if the model includes them."""
 
-    No crop image is examined by an AI model in demo mode.
-    """
+    content = content.strip()
 
-    return CropAssessment(
-        success=True,
-        crop="Unknown",
-        plant_health="Uncertain",
-        possible_disease="Not assessed in demo mode",
-        observed_symptoms=[],
-        confidence="Unable to assess",
-        recommendations=[
-            "The image upload and backend connection are working.",
-            (
-                "No disease diagnosis was performed. "
-                "Configure the real AI service to assess the image."
-            ),
-        ],
-        limitations=[
-            (
-                "SIMULATED DEMO RESULT: no AI model examined "
-                "this image. These are not diagnostic findings."
-            ),
-            (
-                "The actual crop, symptoms, and possible disease "
-                "have not been assessed."
-            ),
-        ],
-    )
+    if not content.startswith("```"):
+        return content
+
+    lines = content.splitlines()
+
+    if lines and lines[0].startswith("```"):
+        lines = lines[1:]
+
+    if lines and lines[-1].strip() == "```":
+        lines = lines[:-1]
+
+    return "\n".join(lines).strip()
 
 
 async def analyze_crop_image(
@@ -165,111 +134,136 @@ async def analyze_crop_image(
     image_format: str,
 ) -> CropAssessment:
     """
-    Return a demo response or request a real AI assessment.
+    Send a plant image to Gemini and return a validated assessment.
 
-    The calling route must validate the uploaded image first.
+    This function does not return simulated demo assessments.
+    Every successful assessment must come from a Gemini response.
     """
 
-    # Development mode never makes a real AI request.
-    if CDR_DEMO_MODE:
-        return _create_demo_assessment()
-
-    # Real AI mode requires a configured API key.
-    api_key = os.getenv("OPENCODE_API_KEY")
+    # Require a real API key.
+    api_key = os.getenv("GEMINI_API_KEY")
 
     if not api_key or api_key.lower().startswith("your_"):
         raise KimiConfigurationError(
-            "The OpenCode API key is not configured. "
-            "Configure a valid key or enable CDR_DEMO_MODE."
+            "GEMINI_API_KEY is missing or has not been configured. "
+            "Add a valid Gemini API key to your .env file."
         )
 
-    image_data_url = _image_to_data_url(
-        image_bytes=image_bytes,
-        image_format=image_format,
+    # Validate the image format.
+    mime_type = _get_image_mime_type(image_format)
+
+    # Convert the uploaded image into a Gemini-compatible part.
+    image_part = types.Part.from_bytes(
+        data=image_bytes,
+        mime_type=mime_type,
     )
 
+    client = genai.Client(api_key=api_key)
+
     try:
-        async with AsyncOpenAI(
-            api_key=api_key,
-            base_url=OPENCODE_BASE_URL,
-            timeout=60.0,
-            max_retries=1,
-        ) as client:
-
-            response = await client.chat.completions.create(
-                model=KIMI_MODEL,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": ASSESSMENT_INSTRUCTIONS,
-                    },
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": (
-                                    "Assess this plant image. "
-                                    "Return the required JSON object."
-                                ),
-                            },
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": image_data_url,
-                                },
-                            },
-                        ],
-                    },
-                ],
+        # Make the actual Gemini image-analysis request.
+        response = await client.aio.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=[
+                ASSESSMENT_INSTRUCTIONS,
+                (
+                    "Examine the attached plant image and return "
+                    "the required JSON assessment."
+                ),
+                image_part,
+            ],
+            config=types.GenerateContentConfig(
                 temperature=0.2,
-                max_tokens=2048,
-            )
-
-    except OpenAIError as error:
-        # Do not expose API credentials or raw provider details.
-        raise KimiServiceError(
-            "The AI service could not complete the request. "
-            "Check your OpenCode account, model access, and "
-            "available credits, then try again."
-        ) from error
-
-    if not response.choices:
-        raise KimiServiceError(
-            "The AI service returned no assessment."
+                max_output_tokens=2048,
+                response_mime_type="application/json",
+            ),
         )
 
-    content = response.choices[0].message.content
+    except APIError as error:
+        # Log diagnostic details without exposing the API key.
+        print(
+            f"Gemini API error: "
+            f"{type(error).__name__}: {str(error)[:500]}"
+        )
+
+        status_code = getattr(error, "code", None)
+
+        if status_code == 401 or status_code == 403:
+            message = (
+                "Gemini authentication failed. Check whether "
+                "your API key is valid and authorized."
+            )
+        elif status_code == 429:
+            message = (
+                "Gemini rejected the request because of a quota "
+                "or rate limit. Check your available API usage."
+            )
+        elif status_code == 404:
+            message = (
+                f"The Gemini model '{GEMINI_MODEL}' was not found "
+                "or is unavailable to this API. Check the model name."
+            )
+        else:
+            message = (
+                "Gemini could not complete the request. "
+                "Check the server logs for diagnostic details."
+            )
+
+        raise KimiServiceError(message) from error
+
+    except Exception as error:
+        print(
+            f"Gemini request error: "
+            f"{type(error).__name__}: {str(error)[:500]}"
+        )
+
+        raise KimiServiceError(
+            "An unexpected error occurred while contacting Gemini. "
+            "Check the server logs for diagnostic details."
+        ) from error
+
+    finally:
+        # Release the asynchronous client's resources.
+        await client.aio.aclose()
+
+    # Ensure Gemini returned content.
+    content = response.text
 
     if not content:
         raise KimiServiceError(
-            "The AI service returned an empty assessment."
+            "Gemini returned no assessment content. "
+            "Try another image or check the model response."
         )
 
-    # Some models may wrap their JSON response in Markdown fences.
-    cleaned_content = content.strip()
-
-    if cleaned_content.startswith("```"):
-        lines = cleaned_content.splitlines()
-
-        if (
-            lines
-            and lines[0].startswith("```")
-            and lines[-1].strip() == "```"
-        ):
-            cleaned_content = "\n".join(lines[1:-1]).strip()
-
+    # Parse and validate the returned JSON.
     try:
-        assessment_data = json.loads(cleaned_content)
+        assessment_data = json.loads(
+            _clean_json_response(content)
+        )
 
         assessment = CropAssessment.model_validate(
             assessment_data
         )
 
-    except (json.JSONDecodeError, ValidationError) as error:
+    except json.JSONDecodeError as error:
+        print(
+            "Gemini returned invalid JSON: "
+            f"{str(error)[:300]}"
+        )
+
         raise KimiServiceError(
-            "The AI service returned an assessment "
-            "that did not match the required format."
+            "Gemini returned an invalid JSON assessment."
+        ) from error
+
+    except ValidationError as error:
+        print(
+            "Gemini assessment failed schema validation: "
+            f"{str(error)[:500]}"
+        )
+
+        raise KimiServiceError(
+            "Gemini returned an assessment that does not match "
+            "the required CropAssessment schema."
         ) from error
 
     return assessment

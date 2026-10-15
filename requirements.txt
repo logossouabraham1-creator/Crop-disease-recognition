@@ -5,3 +5,4 @@ Pillow
 python-multipart
 openai
 python-dotenv
+google-genai
