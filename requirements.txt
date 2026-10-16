@@ -3,6 +3,6 @@ uvicorn[standard]
 Jinja2
 Pillow
 python-multipart
-openai
 python-dotenv
 google-genai
+pytest

@@ -5,7 +5,7 @@ from app.services.image_service import (
     validate_image,
 )
 
-from app.services.kimi_service import (
+from app.services.Gen_service import (
     KimiConfigurationError,
     KimiServiceError,
     analyze_crop_image,
