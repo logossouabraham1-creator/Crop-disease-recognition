@@ -6,7 +6,7 @@ from PIL import Image
 
 from app.main import app
 from app.services.assessment_schema import CropAssessment
-from app.services.kimi_service import KimiServiceError
+from app.services.Gen_service import KimiServiceError
 
 
 client = TestClient(app)

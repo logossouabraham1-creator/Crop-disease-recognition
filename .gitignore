@@ -8,3 +8,6 @@ vene/
 # Python cache files
 __pycache__/
 *.py[cod]
+
+# Local agent instructions (not for commit)
+AGENTS.md
