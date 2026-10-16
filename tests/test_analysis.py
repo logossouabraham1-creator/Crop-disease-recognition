@@ -9,6 +9,7 @@ from app.services.assessment_schema import CropAssessment
 from app.services.Gen_service import GenServiceError
 
 
+
 client = TestClient(app)
 
 

@@ -1,5 +1,6 @@
 # Python virtual environment
 env/
+vene/
 
 # Environment variables and secrets
 .env
