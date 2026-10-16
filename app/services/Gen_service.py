@@ -21,11 +21,11 @@ GEMINI_MODEL = os.getenv(
 )
 
 
-class KimiConfigurationError(Exception):
+class GenConfigurationError(Exception):
     """Raised when the Gemini configuration is missing."""
 
 
-class KimiServiceError(Exception):
+class GenServiceError(Exception):
     """Raised when Gemini cannot complete an assessment."""
 
 
@@ -103,7 +103,7 @@ def _get_image_mime_type(image_format: str) -> str:
     normalized_format = image_format.upper()
 
     if normalized_format not in mime_types:
-        raise KimiServiceError(
+        raise GenServiceError(
             "Unsupported image format for Gemini analysis."
         )
 
@@ -144,7 +144,7 @@ async def analyze_crop_image(
     api_key = os.getenv("GEMINI_API_KEY")
 
     if not api_key or api_key.lower().startswith("your_"):
-        raise KimiConfigurationError(
+        raise GenConfigurationError(
             "GEMINI_API_KEY is missing or has not been configured. "
             "Add a valid Gemini API key to your .env file."
         )
@@ -209,7 +209,7 @@ async def analyze_crop_image(
                 "Check the server logs for diagnostic details."
             )
 
-        raise KimiServiceError(message) from error
+        raise GenServiceError(message) from error
 
     except Exception as error:
         print(
@@ -217,7 +217,7 @@ async def analyze_crop_image(
             f"{type(error).__name__}: {str(error)[:500]}"
         )
 
-        raise KimiServiceError(
+        raise GenServiceError(
             "An unexpected error occurred while contacting Gemini. "
             "Check the server logs for diagnostic details."
         ) from error
@@ -230,7 +230,7 @@ async def analyze_crop_image(
     content = response.text
 
     if not content:
-        raise KimiServiceError(
+        raise GenServiceError(
             "Gemini returned no assessment content. "
             "Try another image or check the model response."
         )
@@ -251,7 +251,7 @@ async def analyze_crop_image(
             f"{str(error)[:300]}"
         )
 
-        raise KimiServiceError(
+        raise GenServiceError(
             "Gemini returned an invalid JSON assessment."
         ) from error
 
@@ -261,7 +261,7 @@ async def analyze_crop_image(
             f"{str(error)[:500]}"
         )
 
-        raise KimiServiceError(
+        raise GenServiceError(
             "Gemini returned an assessment that does not match "
             "the required CropAssessment schema."
         ) from error

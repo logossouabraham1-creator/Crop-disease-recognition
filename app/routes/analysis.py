@@ -6,8 +6,8 @@ from app.services.image_service import (
 )
 
 from app.services.Gen_service import (
-    KimiConfigurationError,
-    KimiServiceError,
+    GenConfigurationError,
+    GenServiceError,
     analyze_crop_image,
 )
 
@@ -49,13 +49,13 @@ async def analyze_crop(image: UploadFile = File(...)):
                 image_format=image_information["format"],
             )
 
-        except KimiConfigurationError as error:
+        except GenConfigurationError as error:
             raise HTTPException(
                 status_code=503,
                 detail=str(error),
             ) from error
 
-        except KimiServiceError as error:
+        except GenServiceError as error:
             raise HTTPException(
                 status_code=502,
                 detail=str(error),

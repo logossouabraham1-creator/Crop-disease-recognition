@@ -6,7 +6,8 @@ from PIL import Image
 
 from app.main import app
 from app.services.assessment_schema import CropAssessment
-from app.services.Gen_service import KimiServiceError
+from app.services.Gen_service import GenServiceError
+
 
 
 client = TestClient(app)
@@ -120,7 +121,7 @@ def test_ai_service_failure_returns_502():
     with patch(
         "app.routes.analysis.analyze_crop_image",
         new_callable=AsyncMock,
-        side_effect=KimiServiceError(
+        side_effect=GenServiceError(
             "Simulated AI service failure"
         ),
     ):
