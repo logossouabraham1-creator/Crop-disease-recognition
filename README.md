@@ -55,11 +55,4 @@ python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 Open `http://127.0.0.1:8000/`, pick a clear leaf photo (JPEG, PNG, or WebP, under about 5 MB), and hit Analyze Image.
 
-Prefer the shortcut? `python -m pytest -q` runs the four rehearsal tests — they use a fake answer, so they pass even without a key.
-
-## The honest state of things
-
-The homepage works, the upload works, the validation works, the tests pass.
-One situation is handled a bit bluntly: without a valid `GEMINI_API_KEY`, analysis requests come back as "service unavailable" (503). The page still loads and your photo still gets checked — only the AI part waits for a key.
-It keeps no history and has no login, so there's nowhere to look back at last week's photo yet.
-Questions or ideas? Open an issue — happy to hear them.
+Prefer the shortcut? `python -m pytest -q` runs the four rehearsal tests — they use a fake answer, so they pass even without an api token
